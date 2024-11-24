@@ -7,60 +7,60 @@ import albumentations as A
 load_dotenv()
 TRAIN_DIR = os.getenv('TRAIN_DIR')
 AUGMENT = os.getenv('AUGMENT')
+MAX = 1336
 
-augmentation_factors = {
-    "corujinha-do-sul (Megascops sanctaecatarinae)": 0.2, #668
-    "corujinha-sapo (Megascops atricapilla)": 0.2, #327
-    "gavião-real (Harpia harpyja)": 0.2, #500
-    "mocho-dos-banhados (Asio flammeus)": 0.2, #598
-    "águia-cinzenta (Urubitinga coronata)": 0.2, #577
-    "condor-dos-andes (Vultur gryphus)": 0.3 #111
-}
-
-def augment_file_once(file, path):
+def augment(file, path, number):
     img = cv2.imread(path)
+
+
+    ''' Transformations: 
+        Geometric: HorizontalFlip, VerticalFlip, ShiftScaleRotate, RandomRotate90
+        Color: RandomBrightnessContrast, HueSaturationValue, RandomGamma
+        Noise and Blur: GaussianBlur, MotionBlur, ISONoise
+        Zoom: RandomScale
+        Perspective and Occlusions: Perspective, CoarseDropout
+    '''
     transform = A.Compose([
-        A.HorizontalFlip(p=1),
-        A.RandomBrightnessContrast(p=1),
-        A.RandomGamma(p=1),
-        A.RandomRotate90(p=1)
+
+        A.HorizontalFlip(p=0.5),
+        A.VerticalFlip(p=0.3),
+        A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.05, rotate_limit=20, p=0.7),
+        A.RandomRotate90(p=0.5),
+        
+        A.RandomBrightnessContrast(p=0.5),
+        A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=20, val_shift_limit=10, p=0.5),
+        A.RandomGamma(p=0.5),
+        
+        A.GaussianBlur(blur_limit=3, p=0.3),
+        A.MotionBlur(blur_limit=3, p=0.3),
+        A.ISONoise(p=0.3),
+        
+      
+        A.RandomScale(scale_limit=0.1, p=0.5),
+        
+        A.Perspective(scale=(0.02, 0.05), p=0.3),
+        A.CoarseDropout(max_holes=5, max_height=50, max_width=50, p=0.3),
     ])
 
     transformed = transform(image=img)
     transformed_image = transformed['image']
 
-    cv2.imwrite(f'{path[:-4]}_augmented_once.jpg', transformed_image)
+    cv2.imwrite(f'{path[:-4]}_augmented_{number}.jpg', transformed_image)
  
-def augment_file_twice(file, path):
-    img = cv2.imread(path)
-    transform = A.Compose([
-        A.RandomBrightnessContrast(p=1),
-        A.RandomGamma(p=1),
-        A.RandomRotate90(p=1)
-    ])
+print ("Starting....")
+for dir in os.listdir(TRAIN_DIR):
+    length = len(os.listdir(f'{TRAIN_DIR}/{dir}'))
 
-    transformed = transform(image=img)
-    transformed_image = transformed['image']
-    
-    cv2.imwrite(f'{path[:-4]}_augmented_twice.jpg', transformed_image)
+    while length < MAX:
+        for file in os.listdir(f'{TRAIN_DIR}/{dir}'):
+
+            if length < MAX:
+                augment(file, f'{TRAIN_DIR}/{dir}/{file}', length)
+                length += 1  
 
 
-if AUGMENT == 'True':
-    for keys in augmentation_factors:
-        for f in os.listdir(f'{TRAIN_DIR}/{keys}'):
-            if not f.endswith('augmented_once.jpg') and not f.endswith('augmented_twice.jpg'):
 
-                if augmentation_factors[keys] == 0.2:
-                    path = f'{TRAIN_DIR}/{keys}/{f}'
-                    augment_file_once(f, path)
 
-                if augmentation_factors[keys] == 0.3:
-                    path = f'{TRAIN_DIR}/{keys}/{f}'
-                    for i in range(2):
-                        if i == 0:
-                            augment_file_once(f, path)
-                        else:
-                            augment_file_twice(f, path)
                          
 print('Augmented images.')
 

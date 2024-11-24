@@ -57,17 +57,23 @@ set_transforms = {
     'train': transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(mean = [0.4713, 0.5089, 0.4957], std = [0.1775, 0.1849, 0.2000]),
-        transforms.Resize((224, 224))
+        transforms.Resize((224, 224)),
+        #transforms.Grayscale(num_output_channels=3)
+
     ]),
     'val': transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(mean = [0.4713, 0.5089, 0.4957], std = [0.1775, 0.1849, 0.2000]),
-        transforms.Resize((224, 224))
+        transforms.Resize((224, 224)),
+        #transforms.Grayscale(num_output_channels=3)
+
     ]),
     'test': transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(mean = [0.4713, 0.5089, 0.4957], std = [0.1775, 0.1849, 0.2000]),
-        transforms.Resize((224, 224))
+        transforms.Resize((224, 224)),
+        #transforms.Grayscale(num_output_channels=3)
+
     ])
 }
 
